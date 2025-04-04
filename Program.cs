@@ -6,8 +6,8 @@ string path = Directory.GetCurrentDirectory() + "//nlog.config";
 var logger = LogManager.Setup().LoadConfigurationFromFile(path).GetCurrentClassLogger();
 logger.Info("Program started");
 
-var db = new DataContext();
-var input = "";
+DataContext db = new();
+string? input = "";
 
 Console.WriteLine("Welcome to BlogCity!");
 do
@@ -45,10 +45,10 @@ do
 
 void DisplayAllBlogs()
 {
-    var query = db.Blogs.OrderBy(b => b.Name);
+    Blog[] query = [.. db.Blogs.OrderBy(b => b.Name)];
 
     Console.WriteLine("Current Blog list:");
-    foreach (var blog in query)
+    foreach (Blog blog in query)
     {
         Console.WriteLine($"{blog.Name} ID: {blog.BlogId}");
     }
@@ -57,7 +57,7 @@ void DisplayAllBlogs()
 void AddBlog()
 {
     Console.WriteLine("Enter the name of the blog to add:");
-    var name = Console.ReadLine();
+    string? name = Console.ReadLine();
     if (string.IsNullOrWhiteSpace(name))
     {
         Console.WriteLine("Blog name cannot be empty.");
@@ -68,7 +68,7 @@ void AddBlog()
         Console.WriteLine("Blog with this name already exists.");
         return;
     }
-    var blog = new Blog { Name = name };
+    Blog blog = new() { Name = name };
     db.AddBlog(blog);
     logger.Info("Blog added - {name}", name);
 }
@@ -76,13 +76,13 @@ void AddBlog()
 void DeleteBlog()
 {
     Console.WriteLine("Enter the name or id of the blog to delete:");
-    var input = Console.ReadLine();
+    string? input = Console.ReadLine();
     if (string.IsNullOrWhiteSpace(input))
     {
         Console.WriteLine("Blog name or id cannot be empty.");
         return;
     }
-    var blog = db.Blogs.FirstOrDefault(b => b.Name == input || b.BlogId.ToString() == input);
+    Blog? blog = db.Blogs.FirstOrDefault(b => b.Name == input || b.BlogId.ToString() == input);
     if (blog == null)
     {
         Console.WriteLine("Blog not found.");
@@ -97,6 +97,7 @@ void CreatePost()
 {
     // prompt for blog name
     Console.WriteLine("Enter the name or id of the blog you want to make a post on:");
+
 }
 
 void DisplayPosts()
