@@ -73,6 +73,43 @@ void AddBlog()
     logger.Info("Blog added - {name}", name);
 }
 
+void CreatePost()
+{
+    // prompt for blog name
+    Console.WriteLine("Enter the name or id of the blog you want to make a post on:");
+    string? input = Console.ReadLine();
+    Blog blog = GetBlogByNameOrId(input);
+    // prompt for post title
+    Console.WriteLine("Enter the title of the post:");
+    string? title = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(title))
+    {
+        Console.WriteLine("Post title cannot be empty.");
+        return;
+    }
+    // prompt for post content
+    Console.WriteLine("Enter the content of the post:");
+    string? content = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(content))
+    {
+        Console.WriteLine("Post content cannot be empty.");
+        return;
+    }
+    // create post object
+    Post post = new() { Title = title, Content = content, BlogId = blog.BlogId };
+    // add post to database
+    db.Posts.Add(post);
+    db.SaveChanges();
+    logger.Info("Post created - {title} in blog {blog}", title, blog.Name);
+    // display success message
+    Console.WriteLine($"Post '{title}' created in '{blog.Name}'.");
+}
+
+void DisplayPosts()
+{
+    // TODO
+}
+
 void DeleteBlog()
 {
     Console.WriteLine("Enter the name or id of the blog to delete:");
@@ -93,14 +130,12 @@ void DeleteBlog()
     logger.Info("Blog deleted - {name}", blog.Name);
 }
 
-void CreatePost()
+Blog GetBlogByNameOrId(string? input)
 {
-    // prompt for blog name
-    Console.WriteLine("Enter the name or id of the blog you want to make a post on:");
-
-}
-
-void DisplayPosts()
-{
-    // TODO
+    if (string.IsNullOrWhiteSpace(input))
+    {
+        throw new ArgumentException("Blog name or id cannot be empty.");
+    }
+    Blog? blog = db.Blogs.First(b => b.Name == input || b.BlogId.ToString() == input) ?? throw new ArgumentException("Blog not found.");
+    return blog;
 }
