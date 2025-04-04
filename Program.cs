@@ -107,17 +107,42 @@ void CreatePost()
 void DisplayPosts()
 {
     // prompt for blog name
-    Console.WriteLine("\nChoose which blog to display posts from:");
-    Blog blog = PromptForBlog();
-    if (string.IsNullOrEmpty(blog.Name))
+    Console.WriteLine("\nChoose which blog to display posts from:\n0) All Blogs");
+    blogs = [.. db.Blogs.OrderBy(b => b.Name)];
+    int count = 1;
+    foreach (Blog b in blogs)
     {
+        Console.WriteLine($"{count}) {b.Name} - {GetPostCount(b)} posts");
+        count++;
+    }
+    // get response from user
+    string? input = Console.ReadLine();
+    if (input == "0")
+    {
+        foreach (Blog b in blogs)
+        {
+            DisplayPostsFromBlog(b);
+        }
         return;
     }
+    if (int.TryParse(input, out int i) && i > 0 && i <= blogs.Length)
+    {
+        logger.Info("User selected blog - {blog}", blogs[i - 1].Name);
+        DisplayPostsFromBlog(blogs[i - 1]);
+    }
+    else
+    {
+        Console.WriteLine("Blog not found.");
+    }
+    
+}
 
+void DisplayPostsFromBlog(Blog blog)
+{
     // get posts from database
     Post[] posts = [.. db.Posts.Where(p => p.BlogId == blog.BlogId)];
     // display posts
-    Console.WriteLine($"Posts in '{blog.Name}' - {posts.Length}");
+    Console.WriteLine($"\nPosts in '{blog.Name}' - {posts.Length}");
     if (posts.Length == 0)
     {
         Console.WriteLine("No posts found.");
@@ -127,7 +152,6 @@ void DisplayPosts()
     {
         Console.WriteLine($"\nBlog: {blog.Name}\nTitle: {post.Title}\nBody: {post.Content}");
     }
-    
 }
 
 Blog PromptForBlog()
