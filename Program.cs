@@ -28,9 +28,14 @@ do
             break;
         case "3":
             logger.Info("User selected option 3 - Create Post");
+            CreatePost();
             break;
         case "4":
             logger.Info("User selected option 4 - Display Posts");
+            break;
+        case "rmv blog":
+            logger.Info("User selected rmv blog - Remove Blog");
+            DeleteBlog();
             break;
         default:
             logger.Info("User selected option quit - Exiting program");
@@ -43,9 +48,9 @@ void DisplayAllBlogs()
     var query = db.Blogs.OrderBy(b => b.Name);
 
     Console.WriteLine("Current Blog list:");
-    foreach (var item in query)
+    foreach (var blog in query)
     {
-    Console.WriteLine(item.Name);
+        Console.WriteLine($"{blog.Name} ID: {blog.BlogId}");
     }
 }
 
@@ -68,9 +73,30 @@ void AddBlog()
     logger.Info("Blog added - {name}", name);
 }
 
+void DeleteBlog()
+{
+    Console.WriteLine("Enter the name or id of the blog to delete:");
+    var input = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(input))
+    {
+        Console.WriteLine("Blog name or id cannot be empty.");
+        return;
+    }
+    var blog = db.Blogs.FirstOrDefault(b => b.Name == input || b.BlogId.ToString() == input);
+    if (blog == null)
+    {
+        Console.WriteLine("Blog not found.");
+        return;
+    }
+    db.Blogs.Remove(blog);
+    db.SaveChanges();
+    logger.Info("Blog deleted - {name}", blog.Name);
+}
+
 void CreatePost()
 {
-    // TODO
+    // prompt for blog name
+    Console.WriteLine("Enter the name or id of the blog you want to make a post on:");
 }
 
 void DisplayPosts()
