@@ -7,13 +7,14 @@ var logger = LogManager.Setup().LoadConfigurationFromFile(path).GetCurrentClassL
 logger.Info("Program started");
 
 DataContext db = new();
+Blog[] blogs = [];
 string? input = "";
 
-Console.WriteLine("Welcome to BlogCity!");
+Console.WriteLine("====| Welcome to BlogCity! |====");
 do
 {
-    Console.WriteLine("\n1) Display all blogs\n2) Add Blog\n3) Create Post\n4) Display Posts\n");
-    Console.WriteLine("Please select an option (1-4) or any other key to quit:");
+    Console.WriteLine("\n====| Main Menu |====\n\n1) Display all blogs\n2) Add Blog\n3) Create Post\n4) Display Posts\n");
+    Console.WriteLine("Enter selection or q to exit:");
     input = Console.ReadLine();
 
     switch (input)
@@ -32,10 +33,7 @@ do
             break;
         case "4":
             logger.Info("User selected option 4 - Display Posts");
-            break;
-        case "rmv blog":
-            logger.Info("User selected rmv blog - Remove Blog");
-            DeleteBlog();
+            DisplayPosts();
             break;
         default:
             logger.Info("User selected option quit - Exiting program");
@@ -45,12 +43,12 @@ do
 
 void DisplayAllBlogs()
 {
-    Blog[] query = [.. db.Blogs.OrderBy(b => b.Name)];
+    blogs = [.. db.Blogs.OrderBy(b => b.Name)];
 
-    Console.WriteLine("Current Blog list:");
-    foreach (Blog blog in query)
+    Console.WriteLine($"====| BlogCity: Home of {blogs.Length} blogs |====\n");
+    foreach (Blog blog in blogs)
     {
-        Console.WriteLine($"{blog.Name} ID: {blog.BlogId}");
+        Console.WriteLine($"{blog.Name}");
     }
 }
 
@@ -58,16 +56,13 @@ void AddBlog()
 {
     Console.WriteLine("Enter the name of the blog to add:");
     string? name = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(name))
+    Boolean blogExists = db.Blogs.Any(b => b.Name == name);
+    if (string.IsNullOrWhiteSpace(name) || blogExists)
     {
-        Console.WriteLine("Blog name cannot be empty.");
+        Console.WriteLine("Blog name cannot be empty or already exist.");
         return;
     }
-    if (db.Blogs.Any(b => b.Name == name))
-    {
-        Console.WriteLine("Blog with this name already exists.");
-        return;
-    }
+
     Blog blog = new() { Name = name };
     db.AddBlog(blog);
     logger.Info("Blog added - {name}", name);
@@ -75,10 +70,14 @@ void AddBlog()
 
 void CreatePost()
 {
-    // prompt for blog name
-    Console.WriteLine("Enter the name or id of the blog you want to make a post on:");
-    string? input = Console.ReadLine();
-    Blog blog = GetBlogByNameOrId(input);
+    // prompt for blog
+    Console.WriteLine("Select the blog you would like to post to:");
+    Blog blog = PromptForBlog();
+    if (string.IsNullOrEmpty(blog.Name))
+    {
+        return;
+    }
+
     // prompt for post title
     Console.WriteLine("Enter the title of the post:");
     string? title = Console.ReadLine();
@@ -107,35 +106,54 @@ void CreatePost()
 
 void DisplayPosts()
 {
-    // TODO
-}
-
-void DeleteBlog()
-{
-    Console.WriteLine("Enter the name or id of the blog to delete:");
-    string? input = Console.ReadLine();
-    if (string.IsNullOrWhiteSpace(input))
+    // prompt for blog name
+    Console.WriteLine("\nChoose which blog to display posts from:");
+    Blog blog = PromptForBlog();
+    if (string.IsNullOrEmpty(blog.Name))
     {
-        Console.WriteLine("Blog name or id cannot be empty.");
         return;
     }
-    Blog? blog = db.Blogs.FirstOrDefault(b => b.Name == input || b.BlogId.ToString() == input);
-    if (blog == null)
+
+    // get posts from database
+    Post[] posts = [.. db.Posts.Where(p => p.BlogId == blog.BlogId)];
+    // display posts
+    Console.WriteLine($"Posts in '{blog.Name}' - {posts.Length}");
+    if (posts.Length == 0)
+    {
+        Console.WriteLine("No posts found.");
+        return;
+    }
+    foreach (Post post in posts)
+    {
+        Console.WriteLine($"\nBlog: {blog.Name}\nTitle: {post.Title}\nBody: {post.Content}");
+    }
+    
+}
+
+Blog PromptForBlog()
+{
+    blogs = [.. db.Blogs.OrderBy(b => b.Name)];
+    int count = 1;
+    foreach (Blog b in blogs)
+    {
+        Console.WriteLine($"{count}) {b.Name} - {GetPostCount(b)} posts");
+        count++;
+    }
+    
+    string? input = Console.ReadLine();
+    if (int.TryParse(input, out int index) && index > 0 && index <= blogs.Length)
+    {
+        logger.Info("User selected blog - {blog}", blogs[index - 1].Name);
+        return blogs[index - 1];
+    }
+    else
     {
         Console.WriteLine("Blog not found.");
-        return;
+        return new Blog();
     }
-    db.Blogs.Remove(blog);
-    db.SaveChanges();
-    logger.Info("Blog deleted - {name}", blog.Name);
 }
 
-Blog GetBlogByNameOrId(string? input)
+int GetPostCount(Blog blog)
 {
-    if (string.IsNullOrWhiteSpace(input))
-    {
-        throw new ArgumentException("Blog name or id cannot be empty.");
-    }
-    Blog? blog = db.Blogs.First(b => b.Name == input || b.BlogId.ToString() == input) ?? throw new ArgumentException("Blog not found.");
-    return blog;
+    return db.Posts.Count(p => p.BlogId == blog.BlogId);
 }
