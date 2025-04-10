@@ -54,7 +54,7 @@ void DisplayAllBlogs()
 
 void AddBlog()
 {
-    Console.WriteLine("Enter the name of the blog to add:");
+    Console.WriteLine("====| New Blog |====\nName of blog:");
     string? name = Console.ReadLine();
     Boolean blogExists = db.Blogs.Any(b => b.Name == name);
     if (string.IsNullOrWhiteSpace(name) || blogExists)
@@ -71,7 +71,7 @@ void AddBlog()
 void CreatePost()
 {
     // prompt for blog
-    Console.WriteLine("Select the blog you would like to post to:");
+    Console.WriteLine("====| New Post |====\nSelect blog to post to:\n");
     Blog blog = PromptForBlog();
     if (string.IsNullOrEmpty(blog.Name))
     {
@@ -99,7 +99,7 @@ void CreatePost()
     // add post to database
     db.Posts.Add(post);
     db.SaveChanges();
-    logger.Info("Post created - {title} in blog {blog}", title, blog.Name);
+    logger.Info($"Post created - {title} in blog {blog.Name}");
     // display success message
     Console.WriteLine($"Post '{title}' created in '{blog.Name}'.");
 }
@@ -107,7 +107,7 @@ void CreatePost()
 void DisplayPosts()
 {
     // prompt for blog name
-    Console.WriteLine("\nChoose which blog to display posts from:\n0) All Blogs");
+    Console.WriteLine("====| View Posts |====\nView posts from which blog:\n\n0) All Blogs");
     blogs = [.. db.Blogs.OrderBy(b => b.Name)];
     int count = 1;
     foreach (Blog b in blogs)
